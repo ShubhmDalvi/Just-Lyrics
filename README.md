@@ -2,9 +2,9 @@
 
 This project is built on top of [Better Lyrics](https://github.com/better-lyrics/better-lyrics), an open-source Chrome extension that adds time-synced lyrics to YouTube Music. 
 
-Just Lyrics takes the core of that project -- the lyrics fetching pipeline, the `@braccato/core` rendering engine, and the multi-provider architecture -- and strips away everything else. The result is a single-purpose extension that shows live synced lyrics in YouTube Music's existing lyrics tab. No settings, no themes, no UI modifications to the page.
+We took everything that makes Better Lyrics great -- the rock-solid lyrics engine, the buttery-smooth karaoke renderer, and the whole multi-provider system that hunts down lyrics from a dozen sources -- and threw away everything that wasn't that. No settings panel, no theme shop, no floating windows, no layout hacking. Just you, the lyrics tab, and words that light up as the song plays.
 
-The heavy lifting is done by the original Better Lyrics codebase and the `@braccato/core` renderer. This project is essentially a configuration of that codebase, not a rewrite.
+All the real magic comes from the original Better Lyrics project and its `@braccato/core` renderer. We mostly just pointed at the good parts and said "keep that, lose the rest."
 
 ## What this version does
 
