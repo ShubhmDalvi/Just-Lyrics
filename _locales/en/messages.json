@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "Just Lyrics",
+    "description": "The name of the extension"
+  },
+  "extensionDescription": {
+    "message": "Shows live synced lyrics on YouTube Music",
+    "description": "The description of the extension"
+  }
+}

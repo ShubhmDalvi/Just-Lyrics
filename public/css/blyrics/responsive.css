@@ -1,0 +1,14 @@
+@media (max-width: 936px) {
+	#blyrics-wrapper {
+		margin-inline: -1.5rem;
+	}
+}
+
+@media (max-width: 615px) {
+	.blyrics-container > div {
+		margin-inline: 4rem !important;
+	}
+	#blyrics-wrapper {
+		margin-top: 0;
+	}
+}

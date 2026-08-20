@@ -1,0 +1,443 @@
+import {
+  FETCH_LYRICS_LOG,
+  LOG_PREFIX,
+  LYRICS_TAB_HIDDEN_LOG,
+  SEEK_EVENT,
+  SERVER_ERROR_LOG,
+  TAB_HEADER_CLASS,
+} from "@constants";
+import { AppState, type PlayerDetails } from "@core/appState";
+import { type LineData, type LyricsData, processLyrics } from "@modules/lyrics/injectLyrics";
+import { stringSimilarity } from "@modules/lyrics/lyricParseUtils";
+import { flushLoader, renderLoader } from "@modules/ui/dom";
+import { log } from "@utils";
+import type { Lyric, LyricSourceResult, ProviderParameters } from "./providers/shared";
+import { getLyrics, newSourceMap, providerPriority } from "./providers/shared";
+import type { YTLyricSourceResult } from "./providers/yt";
+import { getSongAlbum, getSongMetadata, type SegmentMap } from "./requestSniffer/requestSniffer";
+import { mainView } from "@modules/ui/mainLyricsView";
+import { resetPlaybackClock, resumeAllAutoscroll } from "@braccato/core";
+import { registerThemeSetting } from "@braccato/core/themeSettings";
+
+const hideInstrumentalOnly = registerThemeSetting("blyrics-hide-instrumental-only", false, true);
+
+export function seekPlayer(timeS: number): void {
+  log(LOG_PREFIX, `Seeking to ${timeS.toFixed(2)}s`);
+  document.dispatchEvent(new CustomEvent(SEEK_EVENT, { detail: timeS }));
+  resumeAllAutoscroll();
+}
+
+function isInstrumentalOnly(lyrics: Lyric[]): boolean {
+  if (lyrics.length !== 1) return false;
+  return /^\[?instrumental\s*only\]?$/i.test(lyrics[0].words.trim());
+}
+
+function normalizeArtist(artist: string): string {
+  return artist.trim().replace(", & ", ", ");
+}
+
+export type LyricSourceResultWithMeta = LyricSourceResult & {
+  song: string;
+  artist: string;
+  album: string;
+  duration: number;
+  videoId: string;
+  segmentMap: SegmentMap | null;
+  providerKey?: string;
+};
+
+export interface ParsedLyrics {
+  lyrics: Lyric[];
+  language?: string | null;
+  musicVideoSynced?: boolean | null;
+  segmentMap: SegmentMap | null;
+}
+
+function retainParsedLyrics(data: LyricSourceResultWithMeta): void {
+  if (!data.lyrics) return;
+
+  AppState.parsedLyrics = {
+    lyrics: data.lyrics,
+    language: data.language,
+    musicVideoSynced: data.musicVideoSynced,
+    segmentMap: data.segmentMap,
+  };
+}
+
+export function getSegmentMapTimeShiftMs(segmentMap: SegmentMap, timeMs: number): number {
+  let lastTimeChange = 0;
+  for (let segment of segmentMap.segment) {
+    if (timeMs >= segment.counterpartVideoStartTimeMilliseconds) {
+      lastTimeChange = segment.primaryVideoStartTimeMilliseconds - segment.counterpartVideoStartTimeMilliseconds;
+      if (timeMs <= segment.counterpartVideoStartTimeMilliseconds + segment.durationMilliseconds) {
+        break;
+      }
+    }
+  }
+  return lastTimeChange;
+}
+
+export function applySegmentMapToLyrics(
+  lyricData: LyricsData | null,
+  lines: readonly LineData[],
+  segmentMap: SegmentMap
+) {
+  if (segmentMap && lyricData) {
+    lyricData.isMusicVideoSynced = !lyricData.isMusicVideoSynced;
+    const allZero = lyricData.syncType === "none";
+
+    if (!allZero) {
+      for (let lyric of lines) {
+        lyric.accumulatedOffsetMs = 1000000;
+
+        let changeS = getSegmentMapTimeShiftMs(segmentMap, lyric.time * 1000) / 1000;
+        lyric.time = lyric.time + changeS;
+        lyric.lyricElement.dataset.time = String(lyric.time);
+        lyric.parts.forEach(part => {
+          part.time = part.time + changeS;
+          part.lyricElement.dataset.time = String(part.time);
+        });
+      }
+    }
+  }
+}
+
+/**
+ * Main function to create and inject lyrics for the current song.
+ */
+export async function createLyrics(detail: PlayerDetails, signal: AbortSignal): Promise<void> {
+  let song = detail.song;
+  let artist = detail.artist;
+  let videoId = detail.videoId;
+  let duration = Number(detail.duration);
+  const audioTrackData = detail.audioTrackData;
+  const isMusicVideo = detail.contentRect.width !== 0 && detail.contentRect.height !== 0;
+
+  if (!videoId) {
+    log(SERVER_ERROR_LOG, "Invalid video id");
+    return;
+  }
+
+  let shouldCleanupLoader = false;
+
+  try {
+    let matchingSong = await getSongMetadata(videoId, 1, signal);
+    let swappedVideoId = false;
+    let isAVSwitch =
+      (matchingSong &&
+        matchingSong.counterpartVideoId &&
+        matchingSong.counterpartVideoId === AppState.lastLoadedVideoId) ||
+      AppState.lastLoadedVideoId === videoId;
+
+    let segmentMap = matchingSong?.segmentMap || null;
+
+    const isSoftReload = AppState.lastLoadedVideoId === videoId && AppState.lyricData != null;
+
+    if (isAVSwitch && segmentMap) {
+      applySegmentMapToLyrics(AppState.lyricData, mainView.lines, segmentMap);
+      AppState.suppressZeroTime = Date.now() + 5000;
+      AppState.areLyricsTicking = true;
+      log("Switching between audio/video: Skipping Loader", segmentMap);
+    } else if (isSoftReload) {
+      AppState.suppressZeroTime = Date.now() + 5000;
+      AppState.areLyricsTicking = true;
+      log("Soft reload: keeping current lyrics, skipping loader");
+    } else {
+      log("Not Switching between audio/video", isAVSwitch, segmentMap);
+      renderLoader();
+      shouldCleanupLoader = true;
+      matchingSong = await getSongMetadata(videoId, 250, signal);
+      segmentMap = matchingSong?.segmentMap || null;
+      AppState.areLyricsLoaded = false;
+      AppState.areLyricsTicking = false;
+      AppState.suppressZeroTime = 0;
+      resetPlaybackClock();
+    }
+
+    if (matchingSong) {
+      song = matchingSong.title;
+      artist = matchingSong.artist || artist;
+
+      if (isMusicVideo && matchingSong.counterpartVideoId && matchingSong.segmentMap) {
+        log("Switching VideoId to Audio Id");
+        swappedVideoId = true;
+        videoId = matchingSong.counterpartVideoId;
+      }
+    }
+
+    const tabSelector = document.getElementsByClassName(TAB_HEADER_CLASS)[1];
+    if (tabSelector?.getAttribute("aria-selected") !== "true") {
+      AppState.areLyricsLoaded = false;
+      AppState.areLyricsTicking = false;
+      AppState.lyricInjectionFailed = true;
+      log(LYRICS_TAB_HIDDEN_LOG);
+      return;
+    }
+
+    song = song.trim();
+    artist = normalizeArtist(artist);
+    let album = await getSongAlbum(videoId, signal);
+    if (!album) {
+      album = "";
+    }
+
+    if (!song || !artist) {
+      log(SERVER_ERROR_LOG, "Empty song or artist name");
+      return;
+    }
+
+    if (signal.aborted) {
+      return;
+    }
+
+    log(FETCH_LYRICS_LOG, song, artist);
+
+    let lyrics: LyricSourceResult | null = null;
+    let sourceMap = newSourceMap();
+
+    let providerParameters: ProviderParameters = {
+      song,
+      artist,
+      duration,
+      videoId,
+      audioTrackData,
+      album,
+      sourceMap,
+      alwaysFetchMetadata: swappedVideoId,
+      signal,
+    };
+    let ytLyricsEarlyInjectAbortController = new AbortController();
+
+    let ytLyricsPromise = getLyrics(providerParameters, "yt-lyrics").then(lyrics => {
+      if (!AppState.areLyricsLoaded && lyrics && !signal.aborted) {
+        if (!ytLyricsEarlyInjectAbortController.signal.aborted) {
+          log(LOG_PREFIX, "Temporarily Using YT Music Lyrics while we wait for synced lyrics to load");
+          let lyricsWithMeta = {
+            ...lyrics,
+            song: providerParameters.song,
+            artist: providerParameters.artist,
+            duration: providerParameters.duration,
+            videoId: providerParameters.videoId,
+            album: providerParameters.album || "",
+            segmentMap: null,
+          };
+
+          processLyrics(document, lyricsWithMeta, true, signal);
+          retainParsedLyrics(lyricsWithMeta);
+        }
+      }
+      return lyrics;
+    });
+
+    try {
+      let meta = await getLyrics(providerParameters, "metadata");
+      if (meta && meta.album && meta.album.length > 0) {
+        providerParameters.album = meta.album;
+      }
+      if (meta && meta.song && meta.song.length > 0 && song !== meta.song) {
+        log("Using '" + meta.song + "' for song instead of '" + song + "'");
+        providerParameters.song = meta.song;
+      }
+
+      if (meta && meta.artist && meta.artist.length > 0 && artist !== meta.artist) {
+        log("Using '" + meta.artist + "' for artist instead of '" + artist + "'");
+        providerParameters.artist = meta.artist;
+      }
+
+      if (meta && meta.duration && duration !== meta.duration) {
+        log("Using '" + meta.duration + "' for duration instead of '" + duration + "'");
+        providerParameters.duration = meta.duration;
+      }
+    } catch (err) {
+      log(err);
+    }
+
+    let selectedProvider: string | undefined;
+
+    const pinnedProvider = AppState.manualProviderKey;
+    const orderedProviders =
+      pinnedProvider && providerPriority.includes(pinnedProvider)
+        ? [pinnedProvider, ...providerPriority.filter(provider => provider !== pinnedProvider)]
+        : providerPriority;
+
+    for (let provider of orderedProviders) {
+      if (signal.aborted) {
+        return;
+      }
+
+      try {
+        let sourceLyrics = await getLyrics(providerParameters, provider);
+
+        if (sourceLyrics && sourceLyrics.lyrics && sourceLyrics.lyrics.length > 0) {
+          if (hideInstrumentalOnly.getBooleanValue() && isInstrumentalOnly(sourceLyrics.lyrics)) {
+            continue;
+          }
+          ytLyricsEarlyInjectAbortController.abort("Lyrics are ready");
+          let ytLyrics = (await ytLyricsPromise) as YTLyricSourceResult;
+
+          if (ytLyrics !== null) {
+            let lyricText = "";
+            sourceLyrics.lyrics.forEach(lyric => {
+              lyricText += lyric.words + "\n";
+            });
+
+            let matchAmount = stringSimilarity(lyricText.toLowerCase(), ytLyrics.text.toLowerCase());
+            if (matchAmount < 0.5) {
+              log(
+                `Got lyrics from ${sourceLyrics.source}, but they don't match YT lyrics. Rejecting: Match: ${matchAmount}%`
+              );
+              continue;
+            }
+          }
+          lyrics = sourceLyrics;
+          selectedProvider = provider;
+          break;
+        }
+      } catch (err) {
+        log(err);
+      }
+    }
+
+    if (!lyrics) {
+      lyrics = {
+        lyrics: [
+          {
+            startTimeMs: 0,
+            words: "No lyrics found",
+            durationMs: 0,
+          },
+        ],
+        source: "Unknown",
+        sourceHref: "",
+        musicVideoSynced: false,
+        cacheAllowed: false,
+      };
+    }
+
+    if (!lyrics.lyrics) {
+      throw new Error("Lyrics.lyrics is null or undefined. Report this bug");
+    }
+
+    if (isMusicVideo === (lyrics.musicVideoSynced === true)) {
+      segmentMap = null;
+    }
+
+    log("Got Lyrics from " + lyrics.source);
+
+    let lyricsWithMeta: LyricSourceResultWithMeta = {
+      song: providerParameters.song,
+      artist: providerParameters.artist,
+      album: providerParameters.album || "",
+      duration: providerParameters.duration,
+      videoId: providerParameters.videoId,
+      segmentMap,
+      providerKey: selectedProvider,
+      ...lyrics,
+    };
+
+    const collected = providerPriority.filter(key => {
+      const result = sourceMap[key]?.lyricSourceResult;
+      return !!result && "lyrics" in result && Array.isArray(result.lyrics) && result.lyrics.length > 0;
+    });
+    const known = new Set([...AppState.availableProviderKeys, ...collected]);
+    AppState.availableProviderKeys = providerPriority.filter(key => known.has(key));
+
+    AppState.lastLoadedVideoId = detail.videoId;
+    if (signal.aborted) {
+      return;
+    }
+    processLyrics(document, lyricsWithMeta, false, signal);
+    retainParsedLyrics(lyricsWithMeta);
+    shouldCleanupLoader = false;
+  } finally {
+    if (shouldCleanupLoader) {
+      flushLoader();
+    }
+  }
+}
+
+/**
+ * Warms caches so lyric fetching is faster
+ */
+export async function preFetchLyrics(
+  detail: Pick<PlayerDetails, "song" | "artist" | "videoId" | "duration">,
+  isMusicVideo: boolean
+): Promise<void> {
+  log(LOG_PREFIX, "Prefetching next song", detail, isMusicVideo);
+  let song = detail.song;
+  let artist = detail.artist;
+  let videoId = detail.videoId;
+  let duration = Number(detail.duration);
+  let signal = new AbortController().signal;
+
+  let matchingSong = await getSongMetadata(videoId, 250, signal);
+  let swappedVideoId = false;
+
+  if (matchingSong) {
+    song = matchingSong.title;
+    artist = matchingSong.artist || artist;
+
+    if (isMusicVideo && matchingSong.counterpartVideoId && matchingSong.segmentMap) {
+      swappedVideoId = true;
+      videoId = matchingSong.counterpartVideoId;
+    }
+  }
+
+  song = song.trim();
+  artist = normalizeArtist(artist);
+  let album = await getSongAlbum(videoId, signal);
+  if (!album) {
+    album = "";
+  }
+
+  log("Prefetching for: ", song, artist);
+
+  let sourceMap = newSourceMap();
+  let providerParameters: ProviderParameters = {
+    song,
+    artist,
+    duration,
+    videoId,
+    audioTrackData: null,
+    album,
+    sourceMap,
+    alwaysFetchMetadata: swappedVideoId,
+    signal,
+  };
+
+  try {
+    let meta = await getLyrics(providerParameters, "metadata");
+    if (meta && meta.album && meta.album.length > 0 && album !== meta.album) {
+      providerParameters.album = meta.album;
+    }
+    if (meta && meta.song && meta.song.length > 0 && song !== meta.song) {
+      providerParameters.song = meta.song;
+    }
+
+    if (meta && meta.artist && meta.artist.length > 0 && artist !== meta.artist) {
+      providerParameters.artist = meta.artist;
+    }
+
+    if (meta && meta.duration && duration !== meta.duration) {
+      providerParameters.duration = meta.duration;
+    }
+  } catch (err) {
+    log(err);
+  }
+
+  for (let provider of providerPriority) {
+    if (signal.aborted) {
+      return;
+    }
+
+    try {
+      let sourceLyrics = await getLyrics(providerParameters, provider);
+
+      if (sourceLyrics && sourceLyrics.lyrics && sourceLyrics.lyrics.length > 0) {
+        break;
+      }
+    } catch (err) {
+      log(err);
+    }
+  }
+}
