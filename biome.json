@@ -11,11 +11,7 @@
       "!**/dist",
       "!**/node_modules",
       "!**/.claude",
-      "!www/.next/**/*",
-      "!src/options.html",
-      "!src/core/generated/**",
-      "!.all-contributorsrc",
-      "!STYLING.md"
+      "!src/core/generated/**"
     ],
     "ignoreUnknown": true
   },
@@ -57,14 +53,7 @@
   },
   "overrides": [
     {
-      "includes": [
-        "www/.next/**/*",
-        "node_modules/**/*",
-        "dist/**/*",
-        "src/options.html",
-        ".all-contributorsrc",
-        "STYLING.md"
-      ],
+      "includes": ["node_modules/**/*", "dist/**/*"],
       "linter": {
         "enabled": false
       },

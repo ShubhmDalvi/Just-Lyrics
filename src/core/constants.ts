@@ -1,9 +1,7 @@
 import type { LyricSourceKey } from "@modules/lyrics/providers/shared";
 
 export {
-  FOOTER_CLASS,
   LINE_CLASS,
-  LYRICS_CLASS,
   LYRICS_WRAPPER_ID,
   ROMANIZED_LYRICS_CLASS,
   TRANSLATED_LYRICS_CLASS,
@@ -21,8 +19,6 @@ export const NO_LYRICS_TEXT_SELECTOR =
 
 // DOM IDs and Attributes
 export const LYRICS_LOADER_ID = "blyrics-loader" as const;
-export const LYRICS_DISABLED_ATTR = "blyrics-dfs" as const;
-export const HIDDEN_CLASS = "blyrics-hidden" as const;
 
 // Custom Events
 export const SEEK_EVENT = "blyrics-seek-to" as const;
@@ -58,8 +54,6 @@ export const LYRICS_TAB_HIDDEN_LOG =
   "[BetterLyrics] (Safe to ignore) Lyrics tab is hidden, skipping lyrics fetch" as const;
 export const LYRICS_TAB_CLICKED_LOG = "[BetterLyrics] Lyrics tab clicked, fetching lyrics" as const;
 export const LYRICS_WRAPPER_CREATED_LOG = "[BetterLyrics] Lyrics wrapper created" as const;
-export const FOOTER_NOT_VISIBLE_LOG =
-  "[BetterLyrics] (Safe to ignore) Footer is not visible, unable to inject source link" as const;
 export const LYRICS_TAB_NOT_DISABLED_LOG =
   "[BetterLyrics] (Safe to ignore) Lyrics tab is not disabled, unable to enable it" as const;
 export const SONG_SWITCHED_LOG = "[BetterLyrics] Song has been switched" as const;
