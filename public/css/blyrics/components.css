@@ -184,6 +184,9 @@
 #tab-renderer ytmusic-description-shelf-renderer {
 	display: none !important;
 }
+#tab-renderer ytmusic-message-renderer {
+	display: none !important;
+}
 
 @keyframes blyrics-shimmer {
 	0% {
