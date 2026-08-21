@@ -41,7 +41,7 @@ try {
 
   for (const browser of browsers) {
     const distDir = `dist/${browser}`;
-    const zipName = `better-lyrics-${version}-${browser}.zip`;
+    const zipName = `Just-Lyrics-${version}-${browser}.zip`;
     const zipPath = `dist/${zipName}`;
 
     console.log(`\n=== Building ${browser} ===`);
