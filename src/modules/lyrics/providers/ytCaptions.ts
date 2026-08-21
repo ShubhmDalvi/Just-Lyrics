@@ -49,10 +49,16 @@ export async function ytCaptions(providerParameters: ProviderParameters): Promis
   captionsUrl = new URL(captionsUrl);
   captionsUrl.searchParams.set("fmt", "json3");
 
-  let captionData = await fetch(captionsUrl.toString(), {
+  let response = await fetch(captionsUrl.toString(), {
     method: "GET",
     signal: AbortSignal.any([providerParameters.signal, AbortSignal.timeout(10000)]),
-  }).then(response => response.json());
+  });
+  if (!response.ok) {
+    providerParameters.sourceMap["yt-captions"].filled = true;
+    providerParameters.sourceMap["yt-captions"].lyricSourceResult = null;
+    return;
+  }
+  let captionData = await response.json();
 
   let lyricsArray: LyricsArray = [];
 

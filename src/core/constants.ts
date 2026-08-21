@@ -31,10 +31,9 @@ export const NOTO_SANS_UNIVERSAL_LINK =
 // API URLs
 export const HOMEPAGE_URL = "https://betterlyrics.org" as const;
 export const HOMEPAGE_DOMAIN = "betterlyrics.org" as const;
-export const HOMEPAGE_ICON_URL = "https://betterlyrics.org/icon-512.png" as const;
 
-export const CUBEY_LYRICS_API_URL_TURNSTILE = "https://lyrics.api.dacubeking.com/" as const;
 export const CUBEY_LYRICS_API_URL = "https://lyrics.api.dacubeking.com/" as const;
+export const CUBEY_LYRICS_API_URL_TURNSTILE = CUBEY_LYRICS_API_URL;
 
 // Log Prefixes
 export const LOG_PREFIX = "[BetterLyrics]" as const;
@@ -72,7 +71,9 @@ export const MUSIC_NOTES = "♪𝅘𝅥𝅮𝅘𝅥𝅯𝅘𝅥𝅰𝅘𝅥𝅱�
 export const LYRICS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export const LYRICS_NEGATIVE_CACHE_TTL_MS = 30 * 60 * 1000;
 
-export const OFFSET_STORAGE_PREFIX = "blyricsOffset_";
+export const SUPPRESS_ZERO_TIME_MS = 5000;
+export const METADATA_POLL_INTERVAL_MS = 20;
+export const METADATA_POLL_RETRIES = 250;
 
 export const PLAYER_BAR_SELECTOR = "ytmusic-player-bar" as const;
 export const AD_PLAYING_ATTR = "is-advertisement" as const;

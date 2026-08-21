@@ -1,3 +1,4 @@
+import { METADATA_POLL_INTERVAL_MS, METADATA_POLL_RETRIES } from "@constants";
 import type { LongBylineText, NextResponse, ThumbnailElement } from "@modules/lyrics/requestSniffer/NextResponse";
 import { log } from "@utils";
 import { parseTime } from "./utils";
@@ -117,7 +118,7 @@ let firstRequestMissedVideoId: string | null = null;
  * @param signal - AbortSignal to cancel polling
  * @return
  */
-export function getLyrics(videoId: string, maxRetries = 250, signal?: AbortSignal): Promise<LyricsInfo> {
+export function getLyrics(videoId: string, maxRetries = METADATA_POLL_RETRIES, signal?: AbortSignal): Promise<LyricsInfo> {
   if (videoIdToLyricsMap.has(videoId)) {
     return Promise.resolve(videoIdToLyricsMap.get(videoId)!);
   }
@@ -160,7 +161,7 @@ export function getLyrics(videoId: string, maxRetries = 250, signal?: AbortSigna
         return;
       }
       checkCount += 1;
-    }, 20);
+    }, METADATA_POLL_INTERVAL_MS);
 
     signal?.addEventListener("abort", abortHandler, { once: true });
   });
@@ -175,7 +176,7 @@ export function getLyrics(videoId: string, maxRetries = 250, signal?: AbortSigna
  */
 export function getSongMetadata(
   videoId: string,
-  maxCheckCount = 250,
+  maxCheckCount = METADATA_POLL_RETRIES,
   signal?: AbortSignal
 ): Promise<VideoMetadata | null> {
   if (videoMetaDataMap.has(videoId)) {
@@ -214,7 +215,7 @@ export function getSongMetadata(
         return;
       }
       checkCount += 1;
-    }, 20);
+    }, METADATA_POLL_INTERVAL_MS);
 
     signal?.addEventListener("abort", abortHandler, { once: true });
   });
@@ -231,7 +232,7 @@ export function getSongMetadata(
  */
 export async function getArtworkMetadata(
   videoId: string,
-  maxCheckCount = 250,
+  maxCheckCount = METADATA_POLL_RETRIES,
   signal?: AbortSignal
 ): Promise<VideoMetadata | null> {
   const metadata = await getSongMetadata(videoId, maxCheckCount, signal);
@@ -247,12 +248,12 @@ export async function getArtworkMetadata(
  * @return
  */
 export async function getSongAlbum(videoId: string, signal?: AbortSignal): Promise<string | null | undefined> {
-  for (let i = 0; i < 250; i++) {
+  for (let i = 0; i < METADATA_POLL_RETRIES; i++) {
     if (signal?.aborted) return undefined;
     if (videoIdToAlbumMap.has(videoId)) {
       return videoIdToAlbumMap.get(videoId);
     }
-    await new Promise(resolve => setTimeout(resolve, 20));
+    await new Promise(resolve => setTimeout(resolve, METADATA_POLL_INTERVAL_MS));
   }
   log("Song album information didn't come in time for: ", videoId);
 }

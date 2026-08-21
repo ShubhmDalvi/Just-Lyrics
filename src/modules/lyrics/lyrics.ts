@@ -2,8 +2,10 @@ import {
   FETCH_LYRICS_LOG,
   LOG_PREFIX,
   LYRICS_TAB_HIDDEN_LOG,
+  METADATA_POLL_RETRIES,
   SEEK_EVENT,
   SERVER_ERROR_LOG,
+  SUPPRESS_ZERO_TIME_MS,
   TAB_HEADER_CLASS,
 } from "@constants";
 import { AppState, type PlayerDetails } from "@core/appState";
@@ -117,18 +119,18 @@ export async function createLyrics(detail: PlayerDetails, signal: AbortSignal): 
 
     if (isAVSwitch && segmentMap) {
       applySegmentMapToLyrics(AppState.lyricData, mainView.lines, segmentMap);
-      AppState.suppressZeroTime = Date.now() + 5000;
+      AppState.suppressZeroTime = Date.now() + SUPPRESS_ZERO_TIME_MS;
       AppState.areLyricsTicking = true;
       log("Switching between audio/video: Skipping Loader", segmentMap);
     } else if (isSoftReload) {
-      AppState.suppressZeroTime = Date.now() + 5000;
+      AppState.suppressZeroTime = Date.now() + SUPPRESS_ZERO_TIME_MS;
       AppState.areLyricsTicking = true;
       log("Soft reload: keeping current lyrics, skipping loader");
     } else {
       log("Not Switching between audio/video", isAVSwitch, segmentMap);
       renderLoader();
       shouldCleanupLoader = true;
-      matchingSong = await getSongMetadata(videoId, 250, signal);
+      matchingSong = await getSongMetadata(videoId, METADATA_POLL_RETRIES, signal);
       segmentMap = matchingSong?.segmentMap || null;
       AppState.areLyricsLoaded = false;
       AppState.areLyricsTicking = false;
@@ -350,7 +352,7 @@ export async function preFetchLyrics(
   let duration = Number(detail.duration);
   let signal = new AbortController().signal;
 
-  let matchingSong = await getSongMetadata(videoId, 250, signal);
+  let matchingSong = await getSongMetadata(videoId, METADATA_POLL_RETRIES, signal);
   let swappedVideoId = false;
 
   if (matchingSong) {

@@ -288,8 +288,6 @@ function clearLyrics(): void {
   }
 }
 
-export function resetThumbnailState(): void {}
-
 /**
  * Injects required head tags including font links and CSS.
  */

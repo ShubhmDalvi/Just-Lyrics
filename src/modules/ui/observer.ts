@@ -258,7 +258,7 @@ export function initializeLyrics(): void {
             );
           }
         }
-      });
+      }).catch(e => log(GENERAL_ERROR_LOG, e));
     }
 
     if (AppState.lyricInjectionFailed) {
