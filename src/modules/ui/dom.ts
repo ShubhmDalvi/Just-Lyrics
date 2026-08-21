@@ -21,7 +21,6 @@ import { reflow, toMs } from "@braccato/core/util";
 import { log } from "@utils";
 import { scrollEventHandler } from "./observer";
 
-let lyricsObserver: MutationObserver | null = null;
 let adStateObserver: MutationObserver | null = null;
 
 /**
@@ -289,9 +288,7 @@ function clearLyrics(): void {
   }
 }
 
-export function resetThumbnailState(): void {
-  // No-op: album art injection removed
-}
+export function resetThumbnailState(): void {}
 
 /**
  * Injects required head tags including font links and CSS.
@@ -323,11 +320,6 @@ export async function injectHeadTags(): Promise<void> {
  */
 export function cleanup(): void {
   mainView.clear();
-
-  if (lyricsObserver) {
-    lyricsObserver.disconnect();
-    lyricsObserver = null;
-  }
 
   AppState.lyricData = null;
 

@@ -1,6 +1,5 @@
-import { GENERAL_ERROR_LOG, LYRIC_SOURCE_KEYS, OFFSET_STORAGE_PREFIX, STORAGE_TRANSIENT_SET_LOG } from "@constants";
-import { log, truncateSource } from "@utils";
-import { compileWithDetails } from "rics";
+import { GENERAL_ERROR_LOG, STORAGE_TRANSIENT_SET_LOG } from "@constants";
+import { log } from "@utils";
 import { compressString, decompressString, isCompressed } from "./compression";
 
 /**
@@ -8,90 +7,6 @@ import { compressString, decompressString, isCompressed } from "./compression";
  */
 export async function getLocalStorage<T>(keys: string | string[] | null): Promise<T> {
   return (await chrome.storage.local.get(keys as string[])) as unknown as T;
-}
-
-/**
- * Typed wrapper for chrome.storage.sync.get that casts results to expected type.
- */
-export async function getSyncStorage<T>(keys: string | string[] | null): Promise<T> {
-  return (await chrome.storage.sync.get(keys as string[])) as unknown as T;
-}
-
-export const STORE_THEME_PREFIX = "store:";
-
-/** Null once edited: editing drops themeName but leaves activeStoreTheme set. */
-export async function getAppliedStoreThemeId(): Promise<string | null> {
-  const { themeName } = await getSyncStorage<{ themeName?: string }>(["themeName"]);
-  if (!themeName?.startsWith(STORE_THEME_PREFIX)) return null;
-  return themeName.slice(STORE_THEME_PREFIX.length) || null;
-}
-
-interface TransientStorageItem {
-  type: "transient";
-  value: any;
-  expiry: number;
-}
-
-const COMPILE_TIMEOUT = 3000;
-const MAX_ITERATIONS = 10000;
-const HARD_TIMEOUT = 5000;
-
-export function compileRicsToStyles(sourceCode: string): string {
-  try {
-    const startTime = performance.now();
-    const result = compileWithDetails(sourceCode, {
-      timeout: COMPILE_TIMEOUT,
-      maxIterations: MAX_ITERATIONS,
-    });
-    const elapsed = performance.now() - startTime;
-
-    if (elapsed > HARD_TIMEOUT) {
-      log(
-        GENERAL_ERROR_LOG,
-        `rics compilation timeout: took ${elapsed.toFixed(0)}ms\nSource:\n${truncateSource(sourceCode)}`
-      );
-      return sourceCode;
-    }
-
-    if (result.errors.length > 0) {
-      log(
-        GENERAL_ERROR_LOG,
-        `rics compilation errors: ${JSON.stringify(result.errors)}\nSource:\n${truncateSource(sourceCode)}`
-      );
-      return sourceCode;
-    }
-    return result.css;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    log(GENERAL_ERROR_LOG, `rics compilation failed: ${message}\nSource:\n${truncateSource(sourceCode)}`);
-    return sourceCode;
-  }
-}
-
-export async function loadChunkedStyles(): Promise<string | null> {
-  const metadata = await getLocalStorage<{ customCSS_chunked?: boolean; customCSS_chunkCount?: number }>([
-    "customCSS_chunked",
-    "customCSS_chunkCount",
-  ]);
-
-  if (!metadata.customCSS_chunked || !metadata.customCSS_chunkCount) {
-    return null;
-  }
-
-  const chunkKeys = Array.from({ length: metadata.customCSS_chunkCount }, (_, i) => `customCSS_chunk_${i}`);
-  const chunksData = await getLocalStorage<Record<string, string>>(chunkKeys);
-
-  const chunks: string[] = [];
-  for (let i = 0; i < metadata.customCSS_chunkCount; i++) {
-    const chunk = chunksData[`customCSS_chunk_${i}`];
-    if (!chunk) {
-      log(GENERAL_ERROR_LOG, `Missing CSS chunk ${i}`);
-      return null;
-    }
-    chunks.push(chunk);
-  }
-
-  return chunks.join("");
 }
 
 /**
@@ -107,13 +22,10 @@ export function getStorage(
   chrome.storage.sync.get(key, callback);
 }
 
-/**
- * Cross-browser storage setter that works with both Chrome and Firefox.
- *
- * @param {Object} items - Key/value pairs to persist
- */
-export function setStorage(items: { [key: string]: any }): void {
-  chrome.storage.sync.set(items);
+interface TransientStorageItem {
+  type: "transient";
+  value: any;
+  expiry: number;
 }
 
 /**
@@ -168,93 +80,6 @@ export async function setTransientStorage(key: string, value: any, ttl: number):
       },
     });
     log(STORAGE_TRANSIENT_SET_LOG, key);
-    await saveCacheInfo();
-  } catch (error) {
-    log(GENERAL_ERROR_LOG, error);
-  }
-}
-
-/**
- * Stores a value in local storage with no expiry, so it survives cache purges.
- * Used for durable per-song data such as saved lyric offsets.
- *
- * @param {string} key - Storage key
- * @param {*} value - Value to store
- */
-export async function setPersistentStorage(key: string, value: any): Promise<void> {
-  try {
-    const storedValue = typeof value === "string" ? compressString(value) : value;
-    await chrome.storage.local.set({
-      [key]: { type: "transient", value: storedValue, expiry: 0 },
-    });
-  } catch (error) {
-    log(GENERAL_ERROR_LOG, error);
-  }
-}
-
-function extractVideoIdFromCacheKey(key: string): string | null {
-  const withoutPrefix = key.slice("blyrics_".length);
-  for (const sourceKey of LYRIC_SOURCE_KEYS) {
-    const suffix = `_${sourceKey}`;
-    if (withoutPrefix.endsWith(suffix)) {
-      return withoutPrefix.slice(0, -suffix.length);
-    }
-  }
-  return null;
-}
-
-/**
- * Calculates current cache information including count and size of stored lyrics.
- * Count represents unique songs (by video ID), not individual cache entries.
- *
- * @returns {Promise<{count: number, size: number}>} Cache statistics
- */
-async function getUpdatedCacheInfo(): Promise<{ count: number; size: number }> {
-  try {
-    const result = await chrome.storage.local.get(null);
-    const lyricsKeys = Object.keys(result).filter(key => key.startsWith("blyrics_"));
-
-    const uniqueVideoIds = new Set<string>();
-    for (const key of lyricsKeys) {
-      const videoId = extractVideoIdFromCacheKey(key);
-      if (videoId) {
-        uniqueVideoIds.add(videoId);
-      }
-    }
-
-    const totalSize = lyricsKeys.reduce((acc, key) => {
-      const item = result[key];
-      return acc + JSON.stringify(item).length;
-    }, 0);
-
-    return {
-      count: uniqueVideoIds.size,
-      size: totalSize,
-    };
-  } catch (error) {
-    log(GENERAL_ERROR_LOG, error);
-    return { count: 0, size: 0 };
-  }
-}
-
-/**
- * Updates and saves current cache information to sync storage.
- */
-export async function saveCacheInfo(): Promise<void> {
-  const cacheInfo = await getUpdatedCacheInfo();
-  await chrome.storage.sync.set({ cacheInfo: cacheInfo });
-}
-
-/**
- * Clears all cached lyrics data from local storage.
- * Only removes keys with "blyrics_" prefix.
- */
-export async function clearCache(): Promise<void> {
-  try {
-    const result = await chrome.storage.local.get(null);
-    const lyricsKeys = Object.keys(result).filter(key => key.startsWith("blyrics_"));
-    await chrome.storage.local.remove(lyricsKeys);
-    await saveCacheInfo();
   } catch (error) {
     log(GENERAL_ERROR_LOG, error);
   }
@@ -284,38 +109,5 @@ export async function purgeExpiredKeys(): Promise<void> {
     }
   } catch (error) {
     log(GENERAL_ERROR_LOG, error);
-  }
-}
-
-/**
- * Returns stats for saved per-song lyric offsets: how many are stored.
- *
- * @returns {Promise<{count: number}>} Offset storage statistics
- */
-export async function getOffsetInfo(): Promise<{ count: number }> {
-  try {
-    const result = await chrome.storage.local.get(null);
-    const offsetKeys = Object.keys(result).filter(key => key.startsWith(OFFSET_STORAGE_PREFIX));
-    return { count: offsetKeys.length };
-  } catch (error) {
-    log(GENERAL_ERROR_LOG, error);
-    return { count: 0 };
-  }
-}
-
-/**
- * Removes every saved per-song lyric offset from local storage.
- *
- * @returns {Promise<number>} The number of offsets removed
- */
-export async function clearAllOffsets(): Promise<number> {
-  try {
-    const result = await chrome.storage.local.get(null);
-    const offsetKeys = Object.keys(result).filter(key => key.startsWith(OFFSET_STORAGE_PREFIX));
-    await chrome.storage.local.remove(offsetKeys);
-    return offsetKeys.length;
-  } catch (error) {
-    log(GENERAL_ERROR_LOG, error);
-    return 0;
   }
 }

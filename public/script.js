@@ -180,24 +180,5 @@ document.addEventListener("blyrics-seek-to", event => {
   }
 });
 
-document.addEventListener("blyrics-player-control", event => {
-  const player = document.getElementById("movie_player");
-  if (!player) return;
-  switch (event.detail) {
-    case "previous":
-      if (typeof player.previousVideo === "function") player.previousVideo();
-      break;
-    case "play-pause": {
-      const playing = player.getPlayerStateObject?.().isPlaying === true;
-      if (playing) player.pauseVideo();
-      else player.playVideo();
-      break;
-    }
-    case "next":
-      if (typeof player.nextVideo === "function") player.nextVideo();
-      break;
-  }
-});
-
 checkPlayerAndPublish();
 snapshotInterval = setInterval(checkPlayerAndPublish, PLAYER_SNAPSHOT_INTERVAL_MS);

@@ -46,7 +46,7 @@ export type LyricSourceResultWithMeta = LyricSourceResult & {
   providerKey?: string;
 };
 
-export function getSegmentMapTimeShiftMs(segmentMap: SegmentMap, timeMs: number): number {
+function getSegmentMapTimeShiftMs(segmentMap: SegmentMap, timeMs: number): number {
   let lastTimeChange = 0;
   for (let segment of segmentMap.segment) {
     if (timeMs >= segment.counterpartVideoStartTimeMilliseconds) {

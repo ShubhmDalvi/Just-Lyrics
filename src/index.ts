@@ -1,5 +1,5 @@
 import { INITIALIZE_LOG } from "@constants";
-import { purgeExpiredKeys, saveCacheInfo } from "@core/storage";
+import { purgeExpiredKeys } from "@core/storage";
 import { prewarmAuthenticationToken } from "@modules/lyrics/providers/unified";
 import { initProviders } from "@modules/lyrics/providers/shared";
 import { setupRequestSniffer } from "@modules/lyrics/requestSniffer/requestSniffer";
@@ -18,7 +18,6 @@ async function modify(): Promise<void> {
   setupAdObserver();
   enableLyricsTab();
   await purgeExpiredKeys();
-  await saveCacheInfo();
   lyricReloader();
   initializeLyrics();
   disableInertWhenFullscreen();

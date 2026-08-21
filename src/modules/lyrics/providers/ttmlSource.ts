@@ -2,15 +2,6 @@ import { parseTTMLContent } from "@braccato/parsers";
 import { HOMEPAGE_DOMAIN, HOMEPAGE_URL, LOG_PREFIX } from "@constants";
 import { log } from "@core/utils";
 import type { LyricSourceKey, LyricSourceResult, ProviderParameters } from "@modules/lyrics/providers/shared";
-// Unison removed - stub type
-export interface UnisonData {
-  lyricsId: number;
-  effectiveScore: number;
-  voteCount: number;
-  vote: 1 | -1 | null;
-  votes: number;
-  submitter?: { displayName?: string; keyId: string; reputation: number };
-}
 
 interface FillTtmlOptions {
   richsyncKey: LyricSourceKey;
@@ -18,7 +9,6 @@ interface FillTtmlOptions {
   source: string;
   sourceHref: string;
   cacheAllowed?: boolean;
-  unisonData?: UnisonData;
 }
 
 export function fillTtml(
@@ -30,10 +20,9 @@ export function fillTtml(
     source: HOMEPAGE_DOMAIN,
     sourceHref: HOMEPAGE_URL,
     cacheAllowed: true,
-    unisonData: undefined,
   }
 ) {
-  const { richsyncKey, syncedKey, source, sourceHref, cacheAllowed, unisonData } = options;
+  const { richsyncKey, syncedKey, source, sourceHref, cacheAllowed } = options;
 
   const { lyrics, isWordSynced, language } = parseTTMLContent(responseString, {
     songDurationMs: providerParameters.duration * 1000,
@@ -55,7 +44,6 @@ export function fillTtml(
     musicVideoSynced: false,
     source,
     sourceHref,
-    unisonData,
   };
 
   if (isWordSynced) {

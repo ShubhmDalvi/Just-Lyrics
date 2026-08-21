@@ -10,7 +10,6 @@ import { log } from "@utils";
 import unified from "./unified";
 import ytLyrics, { type YTLyricSourceResult } from "./yt";
 import { ytCaptions } from "./ytCaptions";
-import type { UnisonData } from "./ttmlSource";
 /** Current version of the lyrics cache format */
 const LYRIC_CACHE_VERSION = "2.1.0";
 
@@ -63,7 +62,6 @@ export interface LyricSourceResult {
   artist?: string;
   song?: string;
   duration?: number;
-  unisonData?: UnisonData;
 }
 
 export type LyricsArray = Lyric[];
@@ -75,10 +73,6 @@ export interface Lyric {
   key?: string;
   parts?: LyricPart[];
   agent?: string;
-  translations?: { [lang: string]: string };
-  translation?: { text: string; lang: string }; // old property
-  romanization?: string;
-  timedRomanization?: LyricPart[];
   isInstrumental?: boolean;
 }
 

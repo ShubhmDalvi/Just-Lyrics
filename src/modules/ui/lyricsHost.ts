@@ -3,7 +3,6 @@ import { seekPlayer } from "@modules/lyrics/lyrics";
 import { hideAdOverlay, isAdPlaying, isLoaderActive, showAdOverlay } from "@modules/ui/dom";
 import type { LyricsRendererHost } from "@braccato/core";
 import { log } from "@utils";
-import { resetDebugRender, resizeCanvas } from "./animationEngineDebug";
 
 const PLAYER_PAGE_ID = "player-page";
 const PLAYER_UI_STATE_ATTRIBUTE = "player-ui-state";
@@ -45,5 +44,4 @@ export const ytmHost: LyricsRendererHost = {
   log(...args: unknown[]): void {
     log(LOG_PREFIX, ...args);
   },
-  debug: { beginFrame: resetDebugRender, resize: resizeCanvas },
 };

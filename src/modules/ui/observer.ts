@@ -11,7 +11,7 @@ import {
 } from "@constants";
 import { AppState, handleModifications, type PlayerDetails, reloadLyrics } from "@core/appState";
 import { preFetchLyrics } from "@modules/lyrics/lyrics";
-import { getArtworkMetadata, getSongMetadata } from "@modules/lyrics/requestSniffer/requestSniffer";
+import { getSongMetadata } from "@modules/lyrics/requestSniffer/requestSniffer";
 // Settings stubs - settings module removed
 function onAutoSwitchEnabled(callback: () => void): void {
   chrome.storage.sync.get({ autoSwitchEnabled: true }, (settings) => {
@@ -27,20 +27,14 @@ function onFullScreenDisabled(enabledCb: () => void, disabledCb: () => void): vo
 }
 import { currentTickOptions, mainView } from "@modules/ui/mainLyricsView";
 import { log } from "@utils";
-import {
-  cleanup,
-  renderLoader,
-  resetThumbnailState,
-} from "./dom";
+import { cleanup, renderLoader } from "./dom";
 
 // -- Observer Storage & Init Guards --------------------------
-let fullscreenObserver: MutationObserver | null = null;
 let lyricsTabObserver: MutationObserver | null = null;
 let inertObserver: MutationObserver | null = null;
 
 let hasInitializedLyricReloader = false;
 let hasInitializedLyrics = false;
-let metadataAbortController: AbortController | null = null;
 const ANIMATION_ENGINE_INTERVAL_MS = 20;
 let animationFrameRequest: number | null = null;
 let lastAnimationEngineRun = -Infinity;
@@ -77,43 +71,6 @@ function animationFrameLoop(now: number): void {
 function startAnimationFrameLoop(): void {
   if (animationFrameRequest !== null) return;
   animationFrameRequest = requestAnimationFrame(animationFrameLoop);
-}
-
-type FullscreenCallback = () => void;
-
-const fullscreenEnterCallbacks: FullscreenCallback[] = [];
-const fullscreenExitCallbacks: FullscreenCallback[] = [];
-
-function ensureFullscreenObserver(): void {
-  if (fullscreenObserver) return;
-
-  const appLayout = document.querySelector("ytmusic-app-layout");
-  if (!appLayout) {
-    setTimeout(ensureFullscreenObserver, 1000);
-    return;
-  }
-
-  let wasFullscreen = appLayout.hasAttribute("player-fullscreened");
-
-  fullscreenObserver = new MutationObserver(() => {
-    const isFullscreen = appLayout.hasAttribute("player-fullscreened");
-
-    if (!wasFullscreen && isFullscreen) {
-      fullscreenEnterCallbacks.forEach(cb => cb());
-    } else if (wasFullscreen && !isFullscreen) {
-      fullscreenExitCallbacks.forEach(cb => cb());
-    }
-
-    wasFullscreen = isFullscreen;
-  });
-
-  fullscreenObserver.observe(appLayout, { attributes: true, attributeFilter: ["player-fullscreened"] });
-}
-
-export function onFullscreenChange(onEnter: FullscreenCallback, onExit: FullscreenCallback): void {
-  fullscreenEnterCallbacks.push(onEnter);
-  fullscreenExitCallbacks.push(onExit);
-  ensureFullscreenObserver();
 }
 
 /**
@@ -267,7 +224,6 @@ export function initializeLyrics(): void {
       AppState.areLyricsTicking = false;
       AppState.lastVideoId = currentVideoId;
       AppState.lastVideoDetails = currentVideoDetails;
-      resetThumbnailState();
       if (!detail.song || !detail.artist) {
         log("Lyrics switched: Still waiting for metadata ", detail.videoId);
         return;
@@ -276,10 +232,6 @@ export function initializeLyrics(): void {
 
       AppState.queueLyricInjection = true;
       AppState.hasPreloadedNextSong = false;
-
-      metadataAbortController?.abort();
-      const abortController = new AbortController();
-      metadataAbortController = abortController;
     }
 
     if (AppState.areLyricsLoaded && !AppState.hasPreloadedNextSong) {

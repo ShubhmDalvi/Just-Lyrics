@@ -16,7 +16,6 @@
         "lint": "biome lint --write . && biome format --write .",
         "update-version": "tsx tooling/update-version.ts",
         "typecheck": "tsc --noEmit",
-        "selfcheck": "tsx tooling/run-selfchecks.ts",
         "knip": "knip --cache",
         "knip:fix": "knip --fix",
         "knip:ci": "knip --no-exit-code --reporter github-actions"
@@ -39,8 +38,7 @@
     "dependencies": {
         "@braccato/core": "1.1.0",
         "@braccato/parsers": "0.2.0",
-        "fflate": "^0.8.3",
-        "rics": "^0.3.21"
+        "fflate": "^0.8.3"
     },
     "devDependencies": {
         "@biomejs/biome": "2.0.4",
