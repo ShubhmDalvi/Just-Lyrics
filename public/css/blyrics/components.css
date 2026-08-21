@@ -180,6 +180,19 @@
 	display: none !important;
 }
 
+/* The wrapper and loader are direct children of the shared #tab-renderer, so without this they
+   stay visible under whichever non-lyrics tab is active (queue, comments, related). */
+#tab-renderer:not([page-type="MUSIC_PAGE_TYPE_TRACK_LYRICS"]) > #blyrics-wrapper,
+#tab-renderer:not([page-type="MUSIC_PAGE_TYPE_TRACK_LYRICS"]) > #blyrics-loader {
+	display: none !important;
+}
+
+/* Center the "No lyrics found" placeholder line; the renderer marks its container for exactly
+   this state, and real lyrics never carry the attribute. */
+.blyrics-container[data-no-lyrics="true"] .blyrics--line {
+	text-align: center;
+}
+
 /* Hide native YouTube Music lyrics shelf */
 #tab-renderer ytmusic-description-shelf-renderer {
 	display: none !important;

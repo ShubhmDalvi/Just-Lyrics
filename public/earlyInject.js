@@ -86,17 +86,17 @@ window.fetch = async function (request, init) {
                 const decompressedStream = new Response(buffer).body.pipeThrough(ds);
                 return await new Response(decompressedStream).text();
               } catch (e) {
-                console.error("Better Lyrics: Error decompressing request body:", e);
+                console.error("Just Lyrics: Error decompressing request body:", e);
                 return "{}";
               }
             })
             .catch(e => {
-              console.error("Better Lyrics: Error reading request arrayBuffer:", e);
+              console.error("Just Lyrics: Error reading request arrayBuffer:", e);
               return "{}";
             });
         } else {
           requestBodyPromise = originalRequestForJson.text().catch(e => {
-            console.error("Better Lyrics: Error reading request text:", e);
+            console.error("Just Lyrics: Error reading request text:", e);
             return "{}";
           });
         }
@@ -108,7 +108,7 @@ window.fetch = async function (request, init) {
       Promise.all([
         requestBodyPromise,
         clonedResponseForJson.text().catch(e => {
-          console.error("Better Lyrics: Error reading response text:", e);
+          console.error("Just Lyrics: Error reading response text:", e);
           return "{}";
         }),
       ])
@@ -118,14 +118,14 @@ window.fetch = async function (request, init) {
             // No need to parse requestJson if it wasn't a POST, but the empty object handles it gracefully
             requestJson = JSON.parse(awaitedTexts[0]);
           } catch (e) {
-            console.error("Better Lyrics: Error parsing request JSON for URL:", urlString, e);
+            console.error("Just Lyrics: Error parsing request JSON for URL:", urlString, e);
             requestJson = { error: "Failed to parse request JSON" };
           }
           try {
             responseJson = JSON.parse(awaitedTexts[1]);
           } catch (e) {
             console.error(
-              "Better Lyrics: Error parsing response JSON for URL:",
+              "Just Lyrics: Error parsing response JSON for URL:",
               clonedResponseForJson.url || urlString,
               e
             );
@@ -141,7 +141,7 @@ window.fetch = async function (request, init) {
             fetchEnglishNext(urlString, awaitedTexts[0], originalRequestForJson.headers).then(
               englishJson => dispatchSniffResponse(eventUrl, requestJson, englishJson, status, responseJson),
               error => {
-                console.error("Better Lyrics: English /next fetch failed, using localized response:", error);
+                console.error("Just Lyrics: English /next fetch failed, using localized response:", error);
                 dispatchSniffResponse(eventUrl, requestJson, responseJson, status);
               }
             );
@@ -150,16 +150,12 @@ window.fetch = async function (request, init) {
           }
         })
         .catch(error => {
-          console.error(
-            "Better Lyrics: Error in Promise.all processing:",
-            error,
-            clonedResponseForJson.url || urlString
-          );
+          console.error("Just Lyrics: Error in Promise.all processing:", error, clonedResponseForJson.url || urlString);
         });
 
       return response; // Return the original response fetched
     } catch (error) {
-      console.error("Better Lyrics: Error in fetch wrapper for URL:", urlString, error);
+      console.error("Just Lyrics: Error in fetch wrapper for URL:", urlString, error);
       return originalFetch(request, init); // Fallback to original fetch on error
     }
   } else {

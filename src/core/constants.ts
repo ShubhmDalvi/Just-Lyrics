@@ -29,43 +29,42 @@ export const NOTO_SANS_UNIVERSAL_LINK =
   "https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100..900&family=Noto+Sans+Armenian:wght@100..900&family=Noto+Sans+Bengali:wght@100..900&family=Noto+Sans+Devanagari:wght@100..900&family=Noto+Sans+Georgian:wght@100..900&family=Noto+Sans+Gujarati:wght@100..900&family=Noto+Sans+HK:wght@100..900&family=Noto+Sans+Hebrew:wght@100..900&family=Noto+Sans+JP:wght@100..900&family=Noto+Sans+KR:wght@100..900&family=Noto+Sans+Kannada:wght@100..900&family=Noto+Sans+Khmer:wght@100..900&family=Noto+Sans+Lao+Looped:wght@100..900&family=Noto+Sans+Lao:wght@100..900&family=Noto+Sans+Malayalam:wght@100..900&family=Noto+Sans+Marchen&family=Noto+Sans+Meetei+Mayek:wght@100..900&family=Noto+Sans+Multani&family=Noto+Sans+NKo&family=Noto+Sans+Old+Permic&family=Noto+Sans+SC:wght@100..900&family=Noto+Sans+Shavian&family=Noto+Sans+Sinhala:wght@100..900&family=Noto+Sans+Sunuwar&family=Noto+Sans+TC:wght@100..900&family=Noto+Sans+Takri&family=Noto+Sans+Tamil:wght@100..900&family=Noto+Sans+Telugu:wght@100..900&family=Noto+Sans+Thai+Looped:wght@100..900&family=Noto+Sans+Thai:wght@100..900&family=Noto+Sans+Vithkuqi:wght@400..700&family=Noto+Sans+Warang+Citi&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" as const;
 
 // API URLs
-export const HOMEPAGE_URL = "https://betterlyrics.org" as const;
-export const HOMEPAGE_DOMAIN = "betterlyrics.org" as const;
+export const HOMEPAGE_URL = "" as const;
+export const HOMEPAGE_DOMAIN = "Just Lyrics" as const;
 
 export const CUBEY_LYRICS_API_URL = "https://lyrics.api.dacubeking.com/" as const;
 export const CUBEY_LYRICS_API_URL_TURNSTILE = CUBEY_LYRICS_API_URL;
 
 // Log Prefixes
-export const LOG_PREFIX = "[BetterLyrics]" as const;
+export const LOG_PREFIX = "[Just Lyrics]" as const;
 
 // Initialization and General Logs
-export const INITIALIZE_LOG =
-  "%c[BetterLyrics] Loaded Successfully." as const;
-export const GENERAL_ERROR_LOG = "[BetterLyrics] Error:" as const;
+export const INITIALIZE_LOG = "%c[Just Lyrics] Loaded Successfully." as const;
+export const GENERAL_ERROR_LOG = "[Just Lyrics] Error:" as const;
 
 // Lyrics Fetch and Processing Logs
-export const FETCH_LYRICS_LOG = "[BetterLyrics] Fetching lyrics for:" as const;
-export const LYRICS_FOUND_LOG = "[BetterLyrics] Lyrics found, injecting into the page" as const;
-export const NO_LYRICS_FOUND_LOG = "[BetterLyrics] No lyrics found for the current song" as const;
+export const FETCH_LYRICS_LOG = "[Just Lyrics] Fetching lyrics for:" as const;
+export const LYRICS_FOUND_LOG = "[Just Lyrics] Lyrics found, injecting into the page" as const;
+export const NO_LYRICS_FOUND_LOG = "[Just Lyrics] No lyrics found for the current song" as const;
 
 // UI State Logs
 export const LYRICS_TAB_HIDDEN_LOG =
-  "[BetterLyrics] (Safe to ignore) Lyrics tab is hidden, skipping lyrics fetch" as const;
-export const LYRICS_TAB_CLICKED_LOG = "[BetterLyrics] Lyrics tab clicked, fetching lyrics" as const;
-export const LYRICS_WRAPPER_CREATED_LOG = "[BetterLyrics] Lyrics wrapper created" as const;
+  "[Just Lyrics] (Safe to ignore) Lyrics tab is hidden, skipping lyrics fetch" as const;
+export const LYRICS_TAB_CLICKED_LOG = "[Just Lyrics] Lyrics tab clicked, fetching lyrics" as const;
+export const LYRICS_WRAPPER_CREATED_LOG = "[Just Lyrics] Lyrics wrapper created" as const;
 export const LYRICS_TAB_NOT_DISABLED_LOG =
-  "[BetterLyrics] (Safe to ignore) Lyrics tab is not disabled, unable to enable it" as const;
-export const SONG_SWITCHED_LOG = "[BetterLyrics] Song has been switched" as const;
-export const LOADER_TRANSITION_ENDED = "[BetterLyrics] Loader Transition Ended" as const;
+  "[Just Lyrics] (Safe to ignore) Lyrics tab is not disabled, unable to enable it" as const;
+export const SONG_SWITCHED_LOG = "[Just Lyrics] Song has been switched" as const;
+export const LOADER_TRANSITION_ENDED = "[Just Lyrics] Loader Transition Ended" as const;
 
 // Feature State Logs
-export const AUTO_SWITCH_ENABLED_LOG = "[BetterLyrics] Auto switch enabled, switching to lyrics tab" as const;
+export const AUTO_SWITCH_ENABLED_LOG = "[Just Lyrics] Auto switch enabled, switching to lyrics tab" as const;
 export const SYNC_DISABLED_LOG =
-  "[BetterLyrics] Syncing lyrics disabled due to all lyrics having a start time of 0" as const;
+  "[Just Lyrics] Syncing lyrics disabled due to all lyrics having a start time of 0" as const;
 
 // Error and Storage Logs
-export const SERVER_ERROR_LOG = "[BetterLyrics] Server Error:" as const;
-export const STORAGE_TRANSIENT_SET_LOG = "[BetterLyrics] Set transient storage for key: " as const;
+export const SERVER_ERROR_LOG = "[Just Lyrics] Server Error:" as const;
+export const STORAGE_TRANSIENT_SET_LOG = "[Just Lyrics] Set transient storage for key: " as const;
 export const MUSIC_NOTES = "♪𝅘𝅥𝅮𝅘𝅥𝅯𝅘𝅥𝅰𝅘𝅥𝅱𝅘𝅥𝅲" as const;
 
 export const LYRICS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;

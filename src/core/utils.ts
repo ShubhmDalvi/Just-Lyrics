@@ -6,7 +6,7 @@ import { getStorage } from "./storage";
 export let log = (...args: any[]) => {
   getStorage({ isLogsEnabled: true }, items => {
     if (items.isLogsEnabled) {
-      console.log(args);
+      console.log(...args);
     }
   });
 };

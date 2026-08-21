@@ -23,7 +23,7 @@ const rendererStylesheets = () => {
   const nested = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
   if (nested.length > 0) {
     throw new Error(
-      `[BetterLyrics] @braccato/core/dist/styles/ ships flat at ${RENDERER_STYLES_OUTPUT_DIR}/, so nothing may nest under it: ${nested.join(", ")}`
+      `[Just Lyrics] @braccato/core/dist/styles/ ships flat at ${RENDERER_STYLES_OUTPUT_DIR}/, so nothing may nest under it: ${nested.join(", ")}`
     );
   }
 
@@ -38,7 +38,7 @@ const rendererStylesheets = () => {
     .map(({ name }) => name);
   if (shadowed.length > 0) {
     throw new Error(
-      `[BetterLyrics] ${shadowed.join(", ")} exists in both @braccato/core/dist/styles/ and public/${RENDERER_STYLES_OUTPUT_DIR}/, and both emit to ${RENDERER_STYLES_OUTPUT_DIR}/; rename one`
+      `[Just Lyrics] ${shadowed.join(", ")} exists in both @braccato/core/dist/styles/ and public/${RENDERER_STYLES_OUTPUT_DIR}/, and both emit to ${RENDERER_STYLES_OUTPUT_DIR}/; rename one`
     );
   }
 
@@ -74,10 +74,6 @@ module.exports = {
   dev: {
     browser: "chrome",
   },
-  config: (config) => {
-    config.devtool = "source-map";
-    return config;
-  },
   browser: {
     chrome: {
       preferences: { theme: "dark" },
@@ -112,7 +108,7 @@ module.exports = {
     config.plugins.push(emitRendererStyles);
 
     if (!isDevelopment) {
-      console.log("\x1b[31m[BetterLyrics]\x1b[0m Building for", isCanaryRelease ? "canary release" : "standard release");
+      console.log("\x1b[31m[Just Lyrics]\x1b[0m Building for", isCanaryRelease ? "canary release" : "standard release");
 
       // Minify locale JSON files for prod builds
       config.plugins.push({
@@ -135,7 +131,7 @@ module.exports = {
     config.devtool = (isDevelopment || isCanaryRelease) ? "source-map" : false;
     config.output = {
       ...config.output,
-      publicPath: "chrome-extension://effdbpeggelllpfkjppbokhmmiinhlmg/",
+      publicPath: "chrome-extension://njilhjbfopmianlnkaimfpflgbojefeg/",
     };
     return config;
   }

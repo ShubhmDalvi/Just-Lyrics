@@ -4,12 +4,7 @@ import { prewarmAuthenticationToken } from "@modules/lyrics/providers/unified";
 import { initProviders } from "@modules/lyrics/providers/shared";
 import { setupRequestSniffer } from "@modules/lyrics/requestSniffer/requestSniffer";
 import { injectHeadTags, setupAdObserver } from "@modules/ui/dom";
-import {
-  disableInertWhenFullscreen,
-  enableLyricsTab,
-  initializeLyrics,
-  lyricReloader,
-} from "@modules/ui/observer";
+import { disableInertWhenFullscreen, enableLyricsTab, initializeLyrics, lyricReloader } from "@modules/ui/observer";
 import { log, setUpLog } from "@utils";
 
 async function modify(): Promise<void> {

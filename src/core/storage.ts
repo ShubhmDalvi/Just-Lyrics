@@ -87,7 +87,7 @@ export async function setTransientStorage(key: string, value: any, ttl: number):
 
 /**
  * Removes expired cache entries from local storage.
- * Scans all BetterLyrics cache keys and removes those past their expiry time.
+ * Scans all Just Lyrics cache keys and removes those past their expiry time.
  */
 export async function purgeExpiredKeys(): Promise<void> {
   try {

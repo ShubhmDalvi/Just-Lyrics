@@ -1,5 +1,5 @@
 /**
- * @fileoverview YouTube Music player integration for Better Lyrics.
+ * @fileoverview YouTube Music player integration for Just Lyrics.
  * Publishes authoritative metadata/state snapshots without driving every
  * animation tick across the MAIN/ISOLATED world boundary.
  */

@@ -212,6 +212,10 @@ export async function createLyrics(detail: PlayerDetails, signal: AbortSignal): 
       return lyrics;
     });
 
+    // Without this, a failed yt-lyrics fetch is an unhandled rejection whenever no other
+    // provider succeeds and the promise is never awaited inside the provider loop.
+    ytLyricsPromise.catch(err => log(err));
+
     try {
       let meta = await getLyrics(providerParameters, "metadata");
       if (meta && meta.album && meta.album.length > 0) {

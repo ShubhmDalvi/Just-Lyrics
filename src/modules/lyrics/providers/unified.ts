@@ -531,7 +531,7 @@ async function processStreamData(event: string, data: any, params: ProviderParam
       }
     }
 
-    // BetterLyrics (TTML)
+    // Just Lyrics (TTML)
     if (provider === "golyrics") {
       if (results.lyrics) {
         let ttml = results.lyrics;

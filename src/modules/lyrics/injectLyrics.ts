@@ -26,10 +26,7 @@ export interface LyricsData {
 /**
  * Processes lyrics data and prepares it for rendering.
  */
-export function processLyrics(
-  data: LyricSourceResultWithMeta,
-  keepLoaderVisible = false,
-): void {
+export function processLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible = false): void {
   const lyrics = data.lyrics;
   if (!lyrics || lyrics.length === 0) {
     throw new Error(NO_LYRICS_FOUND_LOG);
@@ -52,10 +49,7 @@ export function processLyrics(
 /**
  * Injects lyrics into the DOM with timing, click handlers, and animations.
  */
-function injectLyrics(
-  data: LyricSourceResultWithMeta,
-  keepLoaderVisible = false,
-): void {
+function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible = false): void {
   const lyrics = data.lyrics!;
   cleanup();
   disableNativeLyricsFocus();

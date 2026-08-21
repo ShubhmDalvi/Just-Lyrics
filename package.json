@@ -1,7 +1,7 @@
 {
     "type": "module",
-    "name": "better-lyrics",
-    "version": "2.4.0.2",
+    "name": "just-lyrics",
+    "version": "2.4.0.4",
     "description": "Shows live synced lyrics on YouTube Music",
     "scripts": {
         "dev": "extension dev --browser chrome --polyfill",
@@ -9,7 +9,6 @@
         "dev:brave": "extension dev --chromium-binary \"/Applications/Brave Browser.app/Contents/MacOS/Brave Browser\" --polyfill",
         "start": "extension start --polyfill",
         "build": "extension build --browser all --polyfill",
-        "build:ci": "tsx tooling/build-and-patch.ts",
         "build:zip": "extension build --browser all --polyfill --zip",
         "build:release": "tsx tooling/build-release-zip.ts",
         "preview": "extension preview --polyfill",
@@ -20,21 +19,12 @@
         "knip:fix": "knip --fix",
         "knip:ci": "knip --no-exit-code --reporter github-actions"
     },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/better-lyrics/better-lyrics.git"
-    },
     "keywords": [
         "youtube-music",
         "chrome-extension",
-        "better-lyrics"
+        "lyrics"
     ],
-    "author": "boidushya",
     "license": "GPL-3.0",
-    "bugs": {
-        "url": "https://github.com/better-lyrics/better-lyrics/issues"
-    },
-    "homepage": "https://github.com/better-lyrics/better-lyrics#readme",
     "dependencies": {
         "@braccato/core": "1.1.0",
         "@braccato/parsers": "0.2.0",

@@ -14,13 +14,13 @@ import { preFetchLyrics } from "@modules/lyrics/lyrics";
 import { getSongMetadata } from "@modules/lyrics/requestSniffer/requestSniffer";
 // Settings stubs - settings module removed
 function onAutoSwitchEnabled(callback: () => void): void {
-  chrome.storage.sync.get({ autoSwitchEnabled: true }, (settings) => {
+  chrome.storage.sync.get({ autoSwitchEnabled: true }, settings => {
     if (settings.autoSwitchEnabled) callback();
   });
 }
 
 function onFullScreenDisabled(enabledCb: () => void, disabledCb: () => void): void {
-  chrome.storage.sync.get({ fullscreenDisabled: false }, (settings) => {
+  chrome.storage.sync.get({ fullscreenDisabled: false }, settings => {
     if (settings.fullscreenDisabled) enabledCb();
     else disabledCb();
   });
@@ -208,9 +208,8 @@ export function initializeLyrics(): void {
 
   startAnimationFrameLoop();
 
-  // @ts-ignore
-  document.addEventListener("blyrics-send-player-time", (event: CustomEvent<PlayerDetails>) => {
-    const detail = event.detail;
+  document.addEventListener("blyrics-send-player-time", (event: Event) => {
+    const detail = (event as CustomEvent<PlayerDetails>).detail;
     latestPlayerPlaying = detail.playing;
     latestPlayerTime = detail.currentTime;
     latestPlayerSnapshotTime = detail.browserTime;
@@ -237,28 +236,30 @@ export function initializeLyrics(): void {
     if (AppState.areLyricsLoaded && !AppState.hasPreloadedNextSong) {
       AppState.hasPreloadedNextSong = true;
       log(LOG_PREFIX, "Trying to preload next song");
-      getSongMetadata(AppState.lastVideoId).then(async data => {
-        if (data && data.nextVideoId) {
-          let next = await getSongMetadata(data.nextVideoId);
-          if ((!next || next.isVideo) && data.counterpartVideoId) {
-            next = await getSongMetadata(data.counterpartVideoId).then(counterpart =>
-              counterpart?.nextVideoId ? getSongMetadata(counterpart.nextVideoId) : null
-            );
-          }
+      getSongMetadata(AppState.lastVideoId)
+        .then(async data => {
+          if (data && data.nextVideoId) {
+            let next = await getSongMetadata(data.nextVideoId);
+            if ((!next || next.isVideo) && data.counterpartVideoId) {
+              next = await getSongMetadata(data.counterpartVideoId).then(counterpart =>
+                counterpart?.nextVideoId ? getSongMetadata(counterpart.nextVideoId) : null
+              );
+            }
 
-          if (next) {
-            await preFetchLyrics(
-              {
-                song: next.title,
-                artist: next.artist,
-                duration: String(Math.round(next.durationMs / 1000)),
-                videoId: next.id,
-              },
-              next.isVideo
-            );
+            if (next) {
+              await preFetchLyrics(
+                {
+                  song: next.title,
+                  artist: next.artist,
+                  duration: String(Math.round(next.durationMs / 1000)),
+                  videoId: next.id,
+                },
+                next.isVideo
+              );
+            }
           }
-        }
-      }).catch(e => log(GENERAL_ERROR_LOG, e));
+        })
+        .catch(e => log(GENERAL_ERROR_LOG, e));
     }
 
     if (AppState.lyricInjectionFailed) {

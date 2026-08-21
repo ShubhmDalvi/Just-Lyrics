@@ -40,10 +40,33 @@ interface VideoMetadata {
   segmentMap: SegmentMap | null;
 }
 
-const browseIdToVideoIdMap = new Map<string, string>();
-const videoIdToLyricsMap = new Map<string, LyricsInfo>();
-const videoMetaDataMap = new Map<string, VideoMetadata>();
-const videoIdToAlbumMap = new Map<string, string | null>();
+// Sniffed responses accumulate for every song that streams through the page; without a cap these
+// maps grow for the whole session. Entries are evicted in insertion order, and the currently
+// playing song is always re-inserted by its own /next response before it is read.
+const MAX_CACHED_ENTRIES = 50;
+
+class CappedMap<K, V> extends Map<K, V> {
+  constructor(private readonly maxSize: number) {
+    super();
+  }
+
+  override set(key: K, value: V): this {
+    super.set(key, value);
+    while (this.size > this.maxSize) {
+      const oldestKey = this.keys().next().value;
+      if (oldestKey === undefined) {
+        break;
+      }
+      super.delete(oldestKey);
+    }
+    return this;
+  }
+}
+
+const browseIdToVideoIdMap = new CappedMap<string, string>(MAX_CACHED_ENTRIES);
+const videoIdToLyricsMap = new CappedMap<string, LyricsInfo>(MAX_CACHED_ENTRIES);
+const videoMetaDataMap = new CappedMap<string, VideoMetadata>(MAX_CACHED_ENTRIES);
+const videoIdToAlbumMap = new CappedMap<string, string | null>(MAX_CACHED_ENTRIES);
 
 interface LocalizedDisplayMetadata {
   title: string;
@@ -118,7 +141,11 @@ let firstRequestMissedVideoId: string | null = null;
  * @param signal - AbortSignal to cancel polling
  * @return
  */
-export function getLyrics(videoId: string, maxRetries = METADATA_POLL_RETRIES, signal?: AbortSignal): Promise<LyricsInfo> {
+export function getLyrics(
+  videoId: string,
+  maxRetries = METADATA_POLL_RETRIES,
+  signal?: AbortSignal
+): Promise<LyricsInfo> {
   if (videoIdToLyricsMap.has(videoId)) {
     return Promise.resolve(videoIdToLyricsMap.get(videoId)!);
   }
@@ -219,27 +246,6 @@ export function getSongMetadata(
 
     signal?.addEventListener("abort", abortHandler, { once: true });
   });
-}
-
-/**
- * Resolves the metadata whose thumbnail is the square album art. A music video's own thumbnail is a
- * 16:9 frame, so its audio counterpart is preferred whenever the queue exposes one.
- *
- * @param videoId
- * @param maxCheckCount
- * @param signal - AbortSignal to cancel polling
- * @return
- */
-export async function getArtworkMetadata(
-  videoId: string,
-  maxCheckCount = METADATA_POLL_RETRIES,
-  signal?: AbortSignal
-): Promise<VideoMetadata | null> {
-  const metadata = await getSongMetadata(videoId, maxCheckCount, signal);
-  if (metadata?.isVideo && metadata.counterpartVideoId) {
-    return getSongMetadata(metadata.counterpartVideoId, 10, signal);
-  }
-  return metadata;
 }
 
 /**
