@@ -275,7 +275,6 @@ export function initializeLyrics(): void {
       log(SONG_SWITCHED_LOG, detail.videoId);
 
       AppState.queueLyricInjection = true;
-      AppState.queueSongDetailsInjection = true;
       AppState.hasPreloadedNextSong = false;
 
       metadataAbortController?.abort();

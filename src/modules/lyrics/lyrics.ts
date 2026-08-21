@@ -46,24 +46,6 @@ export type LyricSourceResultWithMeta = LyricSourceResult & {
   providerKey?: string;
 };
 
-export interface ParsedLyrics {
-  lyrics: Lyric[];
-  language?: string | null;
-  musicVideoSynced?: boolean | null;
-  segmentMap: SegmentMap | null;
-}
-
-function retainParsedLyrics(data: LyricSourceResultWithMeta): void {
-  if (!data.lyrics) return;
-
-  AppState.parsedLyrics = {
-    lyrics: data.lyrics,
-    language: data.language,
-    musicVideoSynced: data.musicVideoSynced,
-    segmentMap: data.segmentMap,
-  };
-}
-
 export function getSegmentMapTimeShiftMs(segmentMap: SegmentMap, timeMs: number): number {
   let lastTimeChange = 0;
   for (let segment of segmentMap.segment) {
@@ -222,8 +204,7 @@ export async function createLyrics(detail: PlayerDetails, signal: AbortSignal): 
             segmentMap: null,
           };
 
-          processLyrics(document, lyricsWithMeta, true, signal);
-          retainParsedLyrics(lyricsWithMeta);
+          processLyrics(lyricsWithMeta, true);
         }
       }
       return lyrics;
@@ -346,8 +327,7 @@ export async function createLyrics(detail: PlayerDetails, signal: AbortSignal): 
     if (signal.aborted) {
       return;
     }
-    processLyrics(document, lyricsWithMeta, false, signal);
-    retainParsedLyrics(lyricsWithMeta);
+    processLyrics(lyricsWithMeta, false);
     shouldCleanupLoader = false;
   } finally {
     if (shouldCleanupLoader) {

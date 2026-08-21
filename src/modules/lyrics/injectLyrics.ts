@@ -1,5 +1,4 @@
 import {
-  LOG_PREFIX,
   LYRICS_FOUND_LOG,
   LYRICS_TAB_NOT_DISABLED_LOG,
   NO_LYRICS_FOUND_LOG,
@@ -10,38 +9,26 @@ import {
 import { AppState } from "@core/appState";
 import { applySegmentMapToLyrics, type LyricSourceResultWithMeta } from "@modules/lyrics/lyrics";
 import { cleanup, createLyricsWrapper, flushLoader, renderLoader } from "@modules/ui/dom";
-import { lyricsElementAdded, mainView } from "@modules/ui/mainLyricsView";
+import { mainView } from "@modules/ui/mainLyricsView";
 import { disableNativeLyricsFocus } from "@modules/ui/nativeLyricsFocus";
-import { containsNonLatin } from "@braccato/core/text";
 import { log } from "@utils";
 
 export type { LineData } from "@braccato/core";
 
 export type SyncType = "richsync" | "synced" | "none";
 
-export interface LyricDecorations {
-  [index: number]: {
-    romanization?: string;
-    timedRomanization?: any[];
-    translation?: string;
-  };
-}
-
 export interface LyricsData {
   syncType: SyncType;
   isMusicVideoSynced: boolean;
   tabSelector: HTMLElement;
-  hasNonLatin: boolean;
 }
 
 /**
  * Processes lyrics data and prepares it for rendering.
  */
 export function processLyrics(
-  _doc: Document,
   data: LyricSourceResultWithMeta,
   keepLoaderVisible = false,
-  _signal?: AbortSignal
 ): void {
   const lyrics = data.lyrics;
   if (!lyrics || lyrics.length === 0) {
@@ -96,7 +83,6 @@ function injectLyrics(
     syncType: syncType,
     isMusicVideoSynced: data.musicVideoSynced === true,
     tabSelector,
-    hasNonLatin: lyrics.some(item => !!item.words && containsNonLatin(item.words)),
   };
 
   AppState.lyricData = lyricsData;

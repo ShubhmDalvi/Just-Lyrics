@@ -1,6 +1,6 @@
-import { AppState } from "@core/appState";
 import { ytmHost } from "@modules/ui/lyricsHost";
 import { createLyricsRenderer, type LyricsRenderer, type TickOptions } from "@braccato/core";
+import { AppState } from "@core/appState";
 
 // -- The side panel's view --------------------------
 
@@ -24,11 +24,11 @@ export function currentTickOptions(eventCreationTime: number, isPlaying: boolean
     eventCreationTime,
     isPlaying,
     smoothScroll,
-    globalLyricOffset: AppState.globalLyricOffset,
-    lyricOffset: AppState.lyricOffset,
-    richsyncOffsetTrim: AppState.richsyncOffsetTrim,
-    lineOffsetTrim: AppState.lineOffsetTrim,
-    passiveScrollEnabled: AppState.isPassiveScrollEnabled,
+    globalLyricOffset: 0,
+    lyricOffset: 0,
+    richsyncOffsetTrim: 0,
+    lineOffsetTrim: 0,
+    passiveScrollEnabled: false,
   };
 }
 
