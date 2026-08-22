@@ -1,0 +1,71 @@
+{
+  "manifest_version": 3,
+  "version": "2.4.0.5",
+  "default_locale": "en",
+  "name": "__MSG_extensionName__",
+  "description": "__MSG_extensionDescription__",
+  "icons": {
+    "16": "images/icons/icon-16.png",
+    "48": "images/icons/icon-48.png",
+    "512": "images/icons/icon-512.png"
+  },
+  "chromium:key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyY1IioZO69Z2tGLNCUEu4Etgu3si5OAOxYRdjkSeq/xjIM+Lva0cKBZ9gE1n6szvM7/o3nH9D7GgsO4KrT3xe8Gk9J32sp58OCoCOyGhhP5I512ifz3n/HOr2DNUvybr8IyaM/1WSm9oSugLwPF0ejC3qNi38X5EEG+VMy3ciqMj6Y7iGjukyIksJ3JnuEt8u2VoVkYpvl5OMGO1iX+ctnP2iPkXfjvywq5FpGCacQ3kcrjDZnlRoV7aQjEHi6jibFcWZ2Z3/Yktej0T+R3qoMwlj0hrwy61PH3BchgaSEOgD6KAod1pCvYsXpJEHyBn2a5mh/DpCxq097scOz3hewIDAQAB",
+  "host_permissions": [
+    "*://music.youtube.com/*"
+  ],
+  "permissions": [
+    "storage"
+  ],
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://api.fontshare.com https://fonts.googleapis.com; font-src 'self' data: https://cdn.fontshare.com https://fonts.gstatic.com; img-src 'self' data:; connect-src https://lyrics.api.dacubeking.com"
+  },
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "*://music.youtube.com/*"
+      ],
+      "resources": [
+        "css/blyrics/*.css"
+      ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://music.youtube.com/*"
+      ],
+      "js": [
+        "src/index.ts"
+      ],
+      "run_at": "document_start",
+      "world": "ISOLATED"
+    },
+    {
+      "matches": [
+        "*://music.youtube.com/*"
+      ],
+      "js": [
+        "public/earlyInject.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "*://music.youtube.com/*"
+      ],
+      "js": [
+        "public/script.js"
+      ],
+      "run_at": "document_end",
+      "world": "MAIN"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "just-lyrics@example.com",
+      "strict_min_version": "128.0"
+    },
+    "gecko_android": {}
+  }
+}
