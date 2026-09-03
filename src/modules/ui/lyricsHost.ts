@@ -1,4 +1,5 @@
 import { LOG_PREFIX, TAB_HEADER_CLASS } from "@constants";
+import { AppState } from "@core/appState";
 import { seekPlayer } from "@modules/lyrics/lyrics";
 import { hideAdOverlay, isAdPlaying, isLoaderActive, showAdOverlay } from "@modules/ui/dom";
 import { getResumeScrollElement } from "@modules/ui/resumeScrollButton";
@@ -37,6 +38,10 @@ export const ytmHost: LyricsRendererHost = {
   },
   setResumeAffordanceVisible(visible: boolean): void {
     const resumeButton = getResumeScrollElement();
+    if (AppState.lyricData?.syncType === "none") {
+      resumeButton.setAttribute("autoscroll-hidden", "true");
+      return;
+    }
     if (visible) {
       resumeButton.removeAttribute("autoscroll-hidden");
     } else {
