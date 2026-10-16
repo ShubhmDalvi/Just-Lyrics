@@ -3,7 +3,12 @@ import { createLyricsRenderer, type LyricsRenderer, type TickOptions } from "@br
 
 export const mainView: Omit<LyricsRenderer, "destroy"> = createLyricsRenderer({ document, window, host: ytmHost });
 
-export function currentTickOptions(eventCreationTime: number, isPlaying: boolean, smoothScroll = true): TickOptions {
+export function currentTickOptions(
+  eventCreationTime: number,
+  isPlaying: boolean,
+  smoothScroll = true,
+  playbackRate = 1
+): TickOptions {
   return {
     eventCreationTime,
     isPlaying,
@@ -13,5 +18,6 @@ export function currentTickOptions(eventCreationTime: number, isPlaying: boolean
     richsyncOffsetTrim: 0,
     lineOffsetTrim: 0,
     passiveScrollEnabled: false,
+    playbackRate,
   };
 }

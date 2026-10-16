@@ -192,29 +192,33 @@ export async function createLyrics(detail: PlayerDetails, signal: AbortSignal): 
     };
     let ytLyricsEarlyInjectAbortController = new AbortController();
 
-    let ytLyricsPromise = getLyrics(providerParameters, "yt-lyrics").then(lyrics => {
-      if (!AppState.areLyricsLoaded && lyrics && !signal.aborted) {
-        if (!ytLyricsEarlyInjectAbortController.signal.aborted) {
-          log(LOG_PREFIX, "Temporarily Using YT Music Lyrics while we wait for synced lyrics to load");
-          let lyricsWithMeta = {
-            ...lyrics,
-            song: providerParameters.song,
-            artist: providerParameters.artist,
-            duration: providerParameters.duration,
-            videoId: providerParameters.videoId,
-            album: providerParameters.album || "",
-            segmentMap: null,
-          };
+    let ytLyricsPromise = getLyrics(providerParameters, "yt-lyrics")
+      .then(lyrics => {
+        if (!AppState.areLyricsLoaded && lyrics && !signal.aborted) {
+          if (!ytLyricsEarlyInjectAbortController.signal.aborted) {
+            log(LOG_PREFIX, "Temporarily Using YT Music Lyrics while we wait for synced lyrics to load");
+            let lyricsWithMeta = {
+              ...lyrics,
+              song: providerParameters.song,
+              artist: providerParameters.artist,
+              duration: providerParameters.duration,
+              videoId: providerParameters.videoId,
+              album: providerParameters.album || "",
+              segmentMap: null,
+            };
 
-          processLyrics(lyricsWithMeta, true);
+            processLyrics(lyricsWithMeta, true);
+          }
         }
-      }
-      return lyrics;
-    });
-
-    // Without this, a failed yt-lyrics fetch is an unhandled rejection whenever no other
-    // provider succeeds and the promise is never awaited inside the provider loop.
-    ytLyricsPromise.catch(err => log(err));
+        return lyrics;
+      })
+      .catch(err => {
+        // Treat a failed yt-lyrics fetch as missing: a rejection here must not
+        // propagate to the `await ytLyricsPromise` inside the provider loop,
+        // where it would skip every remaining provider and yield "No lyrics found".
+        log(err);
+        return null;
+      });
 
     try {
       let meta = await getLyrics(providerParameters, "metadata");

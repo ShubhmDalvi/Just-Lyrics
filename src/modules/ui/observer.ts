@@ -57,7 +57,8 @@ function runAnimationEngine(now: number, force = false): void {
   if (AppState.suppressZeroTime < wallTime || currentTime !== 0) {
     if (
       AppState.areLyricsTicking &&
-      mainView.tick(currentTime, currentTickOptions(wallTime, latestPlayerPlaying)) === "lyrics-missing"
+      mainView.tick(currentTime, currentTickOptions(wallTime, latestPlayerPlaying, true, latestPlaybackRate)) ===
+      "lyrics-missing"
     ) {
       AppState.areLyricsTicking = false;
     }

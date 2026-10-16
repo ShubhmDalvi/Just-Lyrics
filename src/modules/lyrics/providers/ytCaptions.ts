@@ -1,6 +1,17 @@
 import { MUSIC_NOTES } from "@constants";
-import { langCodesMatch, log } from "@utils";
+import { findBestLanguageMatch, langCodesMatch, log } from "@utils";
 import type { LyricsArray, ProviderParameters } from "./shared";
+
+export function pickCaptionTrack<T extends { languageCode: string; displayName: string }>(
+  tracks: T[],
+  langCode: string
+): T | undefined {
+  const manualTracks = tracks.filter(track => !track.displayName.includes("auto-generated"));
+  const manualCodes = manualTracks.map(track => track.languageCode);
+  const matchedCode =
+    findBestLanguageMatch(langCode, manualCodes) ?? manualCodes.find(code => langCodesMatch(code, langCode));
+  return manualTracks.find(track => track.languageCode === matchedCode);
+}
 
 export async function ytCaptions(providerParameters: ProviderParameters): Promise<void> {
   let audioTrackData = providerParameters.audioTrackData;
@@ -30,23 +41,15 @@ export async function ytCaptions(providerParameters: ProviderParameters): Promis
     return;
   }
 
-  let captionsUrl: URL | null = null;
-  for (let captionTracksKey in audioTrackData.captionTracks) {
-    let data = audioTrackData.captionTracks[captionTracksKey];
-    if (!data.displayName.includes("auto-generated") && langCodesMatch(data.languageCode, langCode)) {
-      captionsUrl = new URL(data.url);
-      break;
-    }
-  }
-
-  if (!captionsUrl) {
+  const captionTrack = pickCaptionTrack(audioTrackData.captionTracks, langCode);
+  if (!captionTrack) {
     log("Only found auto generated lyrics for youtube captions, not using", audioTrackData);
     providerParameters.sourceMap["yt-captions"].filled = true;
     providerParameters.sourceMap["yt-captions"].lyricSourceResult = null;
     return;
   }
 
-  captionsUrl = new URL(captionsUrl);
+  const captionsUrl = new URL(captionTrack.url);
   captionsUrl.searchParams.set("fmt", "json3");
 
   let response = await fetch(captionsUrl.toString(), {
